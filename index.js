@@ -107,9 +107,9 @@ function update()
 }
 
 function getPoints(){
-  const {width,height,data} = ctx.getImageData(660,380,600,200)
+  const {width,height,data} = ctx.getImageData(0,0,canvas.width,canvas.height)
   const points = [];
-  const prap = 2;
+  const prap = 4;
   for(let i=0;i<width;i+=prap)
   {
     for(let j=0;j<height;j+=prap)
@@ -121,7 +121,7 @@ function getPoints(){
       const a = data[index+3]
       if(r===0&&g===0&&b===0&&a===255)
       {
-        points.push([660+i,380+j])
+        points.push([i,j])
       }
     }
   }
