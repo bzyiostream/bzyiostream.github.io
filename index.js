@@ -84,7 +84,7 @@ function update()
 
   ctx.fillStyle = '#000';
   ctx.textBaseline = 'middle';
-  ctx.font = `${140*devicePixelRatio}px sans-serif`
+  ctx.font = `${80*devicePixelRatio}px sans-serif`
   const tw = ctx.measureText(text);
   console.log(tw)
   ctx.fillText(text,(canvas.width-tw.actualBoundingBoxRight - tw.actualBoundingBoxLeft)/2,canvas.height/2);
