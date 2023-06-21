@@ -1,12 +1,55 @@
-const canvas = document.querySelector('canvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d',{willReadFrequently:true});
+const btn = document.getElementById("play-btn");
+const audio = document.getElementById("audio");
 
-function initCanvasSize(){
-  canvas.width = window.innerWidth*devicePixelRatio;
-  canvas.height = window.innerHeight*devicePixelRatio;
+canvas.width = window.innerWidth*devicePixelRatio;
+canvas.height = window.innerHeight*devicePixelRatio;
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+
+let analyser 
+let bufferLength
+let dataArray
+
+let barWidth
+let barHeight;
+
+async function play()
+{
+  const context = new(window.AudioContext || window.webkitAudioContext)();
+  if(context.state==='running')
+  {
+      btn.style.display = "none";
+      await audio.play();
+      onLoadAudio();
+  }
 }
 
-initCanvasSize()
+btn.onclick = function () {
+    btn.style.display = "none";
+
+    audio.play();
+    onLoadAudio();
+
+};
+
+function onLoadAudio() {
+  const context = new(window.AudioContext || window.webkitAudioContext)();
+  analyser = context.createAnalyser();
+  analyser.fftSize = 512;
+  const source = context.createMediaElementSource(audio);
+  
+  source.connect(analyser);
+  analyser.connect(context.destination);
+  
+  bufferLength = analyser.frequencyBinCount;
+  dataArray = new Uint8Array(bufferLength);
+  
+  barWidth = WIDTH / bufferLength * 1.5;
+}
+
 
 function getRandom(min,max){
   return Math.floor(Math.random()*(max+1-min)+min)
@@ -61,13 +104,37 @@ function clear()
 const particles = [];
 let text = null;
 
+play()
+
 function draw(){
   clear()
   update()
   particles.forEach((p)=>p.draw());
+  drawAudio()
   requestAnimationFrame(draw)
 }
 draw()
+
+function drawAudio()
+{
+  if(!analyser)return
+      analyser.getByteFrequencyData(dataArray);
+
+      // ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+      for (var i = 0, x = 0; i < bufferLength; i++) {
+          barHeight = dataArray[i];
+          // console.log(barHeight);
+          var r = barHeight + 25 * (i / bufferLength);
+          var g = 250 * (i / bufferLength);
+          var b = 50;
+
+          ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+          ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+
+          x += barWidth + 2;
+      }
+}
 
 function getText(){
   return new Date().toTimeString().substring(0,8)
@@ -86,8 +153,7 @@ function update()
   ctx.textBaseline = 'middle';
   ctx.font = `${80*devicePixelRatio}px sans-serif`
   const tw = ctx.measureText(text);
-  console.log(tw)
-  ctx.fillText(text,(canvas.width-tw.actualBoundingBoxRight - tw.actualBoundingBoxLeft)/2,canvas.height/2);
+  ctx.fillText(text,(canvas.width-tw.width)/2,canvas.height/2);
   const points = getPoints()
   clear()
   for(let i=0;i<points.length;i++){
@@ -107,7 +173,7 @@ function update()
 }
 
 function getPoints(){
-  const {width,height,data} = ctx.getImageData(0,0,canvas.width,canvas.height)
+  const {width,height,data} = ctx.getImageData(0,0,canvas.width,canvas.height*0.6)
   const points = [];
   const prap = 2;
   for(let i=0;i<width;i+=prap)
